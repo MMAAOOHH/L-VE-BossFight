@@ -2,7 +2,7 @@ Player = {}
 
 function Player:load()
     self.x = 100
-    self.y = 0
+    self.y = 100
     self.width = 16
     self.height = 16
     self.xVel = 0
@@ -36,21 +36,9 @@ end
 
 function Player:move(dt)
     if love.keyboard.isDown("d", "right") then
-        if self.xVel < self.maxSpeed then
-           if self.xVel + self.acceleration * dt < self.maxSpeed then
-              self.xVel = self.xVel + self.acceleration * dt
-           else
-              self.xVel = self.maxSpeed
-           end
-        end
+        self.xVel = math.min(self.xVel + self.acceleration * dt, self.maxSpeed)
      elseif love.keyboard.isDown("a", "left") then
-        if self.xVel > -self.maxSpeed then
-           if self.xVel - self.acceleration * dt > -self.maxSpeed then
-              self.xVel = self.xVel - self.acceleration * dt
-           else
-              self.xVel = -self.maxSpeed
-           end
-        end
+        self.xVel = math.max(self.xVel - self.acceleration * dt, -self.maxSpeed)
     else
         self:applyFriction(dt)
     end
@@ -58,17 +46,9 @@ end
 
 function Player:applyFriction(dt)
     if self.xVel > 0 then
-       if self.xVel - self.friction * dt > 0 then
-          self.xVel = self.xVel - self.friction * dt
-       else
-          self.xVel = 0
-       end
+        self.xVel = math.max(self.xVel - self.friction * dt, 0)
     elseif self.xVel < 0 then
-       if self.xVel + self.friction * dt < 0 then
-          self.xVel = self.xVel + self.friction * dt
-       else
-          self.xVel = 0
-       end
+        self.xVel = math.min(self.xVel + self.friction * dt, 0)
     end
  end
 
@@ -78,20 +58,23 @@ function Player:syncPhysics()
     self.physics.body:setLinearVelocity(self.xVel, self.yVel)
 end
 
-function Player:beginContact(a,b, collision)
-    if self.grounded then return end
-
-    local normalX, normalY = collision:getNormal()
+function Player:beginContact(a, b, collision)
+    if self.grounded == true then return end
+    local nx, ny = collision:getNormal()
     if a == self.physics.fixture then
-        if normalY > 0 then
-            self:onLand()
-        end
+       if ny > 0 then
+          self:onLand(collision)
+       elseif ny < 0 then
+          self.yVel = 0
+       end
     elseif b == self.physics.fixture then
-        if normalY < 0 then
-            self:onLand()
-        end
+       if ny < 0 then
+          self:onLand(collision)
+       elseif ny > 0 then
+          self.yVel = 0
+       end
     end
-end
+ end
 
 function Player:onLand(collision)
     self.currentGroundCollision = collision
@@ -106,11 +89,10 @@ function Player:jump(key)
     end
 end
 
-function Player:endContact(a,b, collision)
-
+function Player:endContact(a , b, collision)
     if a == self.physics.fixture or b == self.physics.fixture then
-        if currentGroundCollision == collision then
-            self.grounded = true
+        if self.currentGroundCollision == collision then
+            self.grounded = false
         end
     end  
 end
