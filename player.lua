@@ -13,6 +13,10 @@ function Player:load()
     self.gravity = 2000
     self.jumpAmount = -600
 
+    self.coyoteTime = 0
+    self.coyoteDuration = 1
+
+
     self.grounded = false
 
     self.physics = {}
@@ -23,9 +27,16 @@ function Player:load()
 end
 
 function Player:update(dt)
+    self:tickCoyote(dt)
     self:syncPhysics()
     self:move(dt)
     self:applyGravity(dt)
+end
+
+function Player:tickCoyote(dt)
+    if not self.grounded then
+        self.coyoteTime = self.coyoteTime - dt
+    end
 end
 
 function Player:applyGravity(dt)
@@ -80,12 +91,16 @@ function Player:onLand(collision)
     self.currentGroundCollision = collision
     self.yVel = 0
     self.grounded = true
+    self.coyoteTime = self.coyoteDuration
 end
 
 function Player:jump(key)
-    if (key == "w" or key == "up") and self.grounded then
-        self.yVel = self.jumpAmount
-        self.grounded = false
+    if (key == "w" or key == "up") then 
+        if self.grounded or self.coyoteTime > 0 then
+            self.yVel = self.jumpAmount
+            self.grounded = false
+            self.coyoteTime = 0
+        end
     end
 end
 
