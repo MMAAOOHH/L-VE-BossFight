@@ -1,4 +1,6 @@
-# L-VE-BossFight
+# L-VE-BossFight - Martin Ohlsson
+
+![](roid.gif)  
 
 WASD/Arrowkeys to move  
 Shoot with Space/Ctrl  
